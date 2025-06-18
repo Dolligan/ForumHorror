@@ -45,6 +45,28 @@
         .username-link:hover {
             text-decoration: underline;
         }
+        #time-pass-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            flex-direction: column;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+        }
+        #app.screen-fuzzy {
+            filter: blur(4px) grayscale(50%);
+            transition: filter 0.5s ease;
+        }
         @media (max-width: 768px) {
             .ips-post {
                 grid-template-columns: 1fr;
@@ -59,47 +81,47 @@
 </head>
 <body class="text-gray-800">
 
+    <div id="time-pass-overlay" class="hidden opacity-0">
+        <p>Time passes...</p>
+    </div>
+
     <div id="app" class="max-w-7xl mx-auto p-4">
 
         <!-- Header and Navigation -->
         <header class="bg-white rounded-lg shadow-sm mb-4">
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
                 <h1 class="text-3xl font-bold text-gray-900">Forum Of Horror</h1>
+                <div id="date-time-display" class="text-sm text-gray-500 font-medium"></div>
                 <div class="flex items-center space-x-4">
                     <span class="text-sm">Welcome, <span class="font-semibold username-link" data-char-name="PlayerOne">PlayerOne</span></span>
                     <img src="https://placehold.co/40x40/7e22ce/ffffff?text=P" alt="Player Avatar" class="rounded-full w-10 h-10 border-2 border-purple-500">
-                     <button id="nav-notes-icon" class="p-2 rounded-full hover:bg-gray-200" title="Notes">
+                    <button id="time-pass-btn" class="p-2 rounded-full hover:bg-gray-200" title="Pass Time">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </button>
+                    <button id="nav-notes-icon" class="p-2 rounded-full hover:bg-gray-200" title="Notes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"></path><path d="M16 5l4 4"></path></svg>
                     </button>
                 </div>
             </div>
             <nav class="p-2 flex space-x-2">
                 <button id="nav-forum" class="px-4 py-2 rounded-md font-semibold text-white bg-blue-600 shadow-sm">Forum</button>
-                <button id="nav-messages" class="px-4 py-2 rounded-md font-semibold text-gray-600 hover:bg-gray-100">Messages <span class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1 ml-1">2</span></button>
+                <button id="nav-messages" class="px-4 py-2 rounded-md font-semibold text-gray-600 hover:bg-gray-100">Messages <span id="message-count-badge" class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1 ml-1 hidden"></span></button>
             </nav>
         </header>
 
         <!-- Main Content Area -->
         <main>
-            <!-- Screen 1: Forum View -->
             <div id="screen-forum">
                 <div class="ips-card mb-4" id="forum-list-card">
                     <h2 class="ips-header font-bold text-lg">General Discussion</h2>
-                    <!-- Thread List -->
-                    <div id="thread-list">
-                        <!-- Dynamic content will be injected here by JS -->
-                    </div>
+                    <div id="thread-list"></div>
                 </div>
-                <!-- Thread Detail View (hidden by default) -->
                 <div id="thread-detail" class="hidden">
                      <div class="flex justify-between items-center mb-4">
                         <button id="back-to-forum" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300">← Back to Forum</button>
                         <h2 id="thread-title" class="text-xl font-bold"></h2>
                     </div>
-                    <div id="post-container" class="space-y-4">
-                        <!-- Dynamic posts will be injected here by JS -->
-                    </div>
-                    <!-- Reply Box -->
+                    <div id="post-container" class="space-y-4"></div>
                     <div class="ips-card mt-6">
                         <div class="ips-header font-bold">Write a reply...</div>
                         <div class="p-4">
@@ -112,22 +134,16 @@
                 </div>
             </div>
 
-            <!-- Screen 2: Messages View -->
             <div id="screen-messages" class="hidden">
-                <!-- Message content will be populated by JS -->
+                 <div id="message-list-container"></div>
+                 <div id="message-reply-container" class="hidden"></div>
             </div>
 
-            <!-- Screen 3: Notes View -->
-            <div id="screen-notes" class="hidden">
-                 <!-- Notes content will be populated by JS -->
-            </div>
+            <div id="screen-notes" class="hidden"></div>
             
-            <!-- Screen 4: Profile View -->
             <div id="screen-profile" class="hidden">
                 <div class="ips-card">
-                    <div id="profile-content">
-                        <!-- Profile content will be injected here by JS -->
-                    </div>
+                    <div id="profile-content"></div>
                 </div>
             </div>
         </main>
@@ -137,6 +153,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
+            // --- GAME STATE ---
+            let gameTurn = 0;
+            let timePassing = false;
+            let currentDate = new Date('2025-04-01T08:00:00');
+
             // --- GAME DATA ---
             const characters = {
                 'PlayerOne': { name: 'PlayerOne', avatar: 'https://placehold.co/80x80/7e22ce/ffffff?text=P', title: 'New Member', bio: 'That\'s you. You\'re new here, trying to figure things out.' },
@@ -147,35 +168,48 @@
                 'QuantumLeaper': { name: 'QuantumLeaper', avatar: 'https://placehold.co/80x80/64748b/ffffff?text=Q', title: 'Member', bio: 'Loves science fiction and fringe science. Their posts are full of speculation about alternate realities, time travel, and the nature of consciousness.' },
             };
 
-            const threads = [
-                { id: 1, title: 'Is retro-computing making a comeback?', author: 'XeroCool', replies: 3, lastPost: '2 minutes ago' },
-                { id: 2, title: 'What Sci-Fi movie blew your mind recently?', author: 'QuantumLeaper', replies: 1, lastPost: '25 minutes ago' },
-                { id: 3, title: 'Keto Diet - Tips for beginners?', author: 'DietDave', replies: 1, lastPost: '1 hour ago' },
-                { id: 4, title: 'Strange server energy readings [DELETED]', author: 'Glitch', replies: 0, lastPost: '3 hours ago', deleted: true },
-                { id: 5, title: 'Best language for a beginner coder in 2025?', author: 'PlayerOne', replies: 1, lastPost: '5 hours ago' },
+            let threads = [
+                { id: 1, title: 'Is retro-computing making a comeback?', author: 'XeroCool', timestamp: new Date('2025-04-01T06:15:00') },
+                { id: 2, title: 'What Sci-Fi movie blew your mind recently?', author: 'QuantumLeaper', timestamp: new Date('2025-04-01T05:30:00')},
+                { id: 3, title: 'Keto Diet - Tips for beginners?', author: 'DietDave', timestamp: new Date('2025-04-01T04:05:00')},
             ];
 
-            const posts = {
+            let posts = {
                 1: [
-                    { author: 'XeroCool', content: "I've been messing around with some old PDP-11 hardware. There's a certain... purity to it. It's not cluttered with all the modern OS junk. Feels more direct. Anyone else feel that?" },
-                    { author: 'QuantumLeaper', content: "I get that. It's like driving a manual car. More control, more connection to the machine." },
-                    { author: 'Glitch', content: "More connection than you think. Some of those old architectures had... quirks. Backdoors. Things left behind." },
-                    { author: 'PlayerOne', content: "That's interesting. What kind of 'things'?" }
+                    { author: 'XeroCool', content: "I've been messing around with some old PDP-11 hardware. There's a certain... purity to it.", timestamp: new Date('2025-04-01T06:15:00') },
+                    { author: 'QuantumLeaper', content: "I get that. It's like driving a manual car. More control, more connection to the machine.", timestamp: new Date('2025-04-01T06:45:00') },
+                    { author: 'Glitch', content: "More connection than you think. Some of those old architectures had... quirks. Backdoors. Things left behind.", timestamp: new Date('2025-04-01T07:30:00') },
                 ],
                  2: [
-                    { author: 'QuantumLeaper', content: "Just watched 'Event Horizon' again. The idea of a ship's gravity drive accessing a dimension of pure chaos is terrifyingly brilliant." },
+                    { author: 'QuantumLeaper', content: "Just watched 'Event Horizon' again. The idea of a ship's gravity drive accessing a dimension of pure chaos is terrifyingly brilliant.", timestamp: new Date('2025-04-01T05:30:00') },
                  ],
                  3: [
-                    { author: 'DietDave', content: "Hey everyone! Day 20 of my new super-keto plan and I feel AMAZING! The energy is just unreal! You have to try it!" },
-                 ],
-                 5: [
-                    { author: 'PlayerOne', content: "Hey, I'm new to coding, what's a good language to start with?" },
-                    { author: 'XeroCool', content: "Forget Python or JavaScript. Learn C. Learn how the machine actually thinks."}
+                    { author: 'DietDave', content: "Hey everyone! Day 20 of my new super-keto plan and I feel AMAZING! The energy is just unreal! You have to try it!", timestamp: new Date('2025-04-01T04:05:00') },
                  ]
             };
+            
+            let messages = [
+                { id: 1, from: 'XeroCool', to: 'PlayerOne', subject: 'RE: Your post about old tech', content: "Hey, saw your post. You know, some of that 'old tech' isn't as dead as you think. Some of it is just... waiting. Be careful what you go looking for.", timestamp: new Date('2025-03-31T14:00:00'), unread: true },
+                { id: 2, from: 'DietDave', to: 'PlayerOne', subject: 'Keto diet question', content: "Thanks for the advice in the health thread! I'm going to try that supplement you mentioned. Really appreciate it!", timestamp: new Date('2025-03-30T10:00:00'), unread: true }
+            ];
+
+            const scheduledEvents = [
+                {
+                    turn: 1,
+                    type: 'newMessage',
+                    data: { from: 'Glitch', to: 'PlayerOne', subject: 'That post', content: 'The one about the servers. You didn\'t see it. Forget you ever saw it.', unread: true }
+                },
+                {
+                    turn: 2,
+                    type: 'newPost',
+                    data: { threadId: 2, author: 'XeroCool', content: 'Sci-fi is fine, but reality is stranger. Some people think old mainframes are just big calculators. They\'re more like sleeping gods.' }
+                }
+            ];
 
             // --- UI ELEMENT REFERENCES ---
             const appContainer = document.getElementById('app');
+            const timePassOverlay = document.getElementById('time-pass-overlay');
+            const dateTimeDisplay = document.getElementById('date-time-display');
             const mainContentScreens = {
                 forum: document.getElementById('screen-forum'),
                 messages: document.getElementById('screen-messages'),
@@ -187,6 +221,8 @@
                 messages: document.getElementById('nav-messages'),
             };
             const notesIconButton = document.getElementById('nav-notes-icon');
+            const timePassBtn = document.getElementById('time-pass-btn');
+            const messageCountBadge = document.getElementById('message-count-badge');
             const threadListContainer = document.getElementById('thread-list');
             const threadDetailContainer = document.getElementById('thread-detail');
             const forumListCard = document.getElementById('forum-list-card');
@@ -196,28 +232,54 @@
             const profileContentContainer = document.getElementById('profile-content');
             const replyTextarea = document.getElementById('reply-textarea');
             const postReplyBtn = document.getElementById('post-reply-btn');
+            const messageListContainer = document.getElementById('message-list-container');
+            const messageReplyContainer = document.getElementById('message-reply-container');
 
             let previousScreenId = null;
             let currentThreadId = null;
 
+            // --- FORMATTING HELPERS ---
+            function formatClock(date) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' };
+                return date.toLocaleDateString('en-US', options);
+            }
+            
+            function formatTimestamp(postDate, baseDate) {
+                const diffSeconds = Math.round((baseDate - postDate) / 1000);
+                const diffMinutes = Math.round(diffSeconds / 60);
+                const diffHours = Math.round(diffMinutes / 60);
+                const diffDays = Math.round(diffHours / 24);
+
+                if (diffSeconds < 60) return "Just now";
+                if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+                if (diffHours < 24) return `${diffHours} hours ago`;
+                if (diffDays === 1) return `Yesterday`;
+                return `${diffDays} days ago`;
+            }
+
             // --- RENDER FUNCTIONS ---
+            function renderClock() { 
+                dateTimeDisplay.textContent = formatClock(currentDate); 
+            }
             
             function renderThreadList() {
                 threadListContainer.innerHTML = '';
-                threads.forEach(thread => {
+                const sortedThreads = [...threads].sort((a,b) => {
+                    const lastPostA = posts[a.id] ? posts[a.id].slice(-1)[0].timestamp : a.timestamp;
+                    const lastPostB = posts[b.id] ? posts[b.id].slice(-1)[0].timestamp : b.timestamp;
+                    return lastPostB - lastPostA;
+                });
+
+                sortedThreads.forEach(thread => {
+                    const threadPosts = posts[thread.id] || [];
+                    const postCount = threadPosts.length > 1 ? threadPosts.length - 1 : 0;
+                    const lastPostTimestamp = threadPosts.length > 0 ? threadPosts[threadPosts.length - 1].timestamp : thread.timestamp;
+
                     const threadHtml = `
                         <div class="flex items-center p-4 border-t border-gray-200 hover:bg-gray-50 ${thread.deleted ? 'opacity-50' : 'cursor-pointer'}" ${!thread.deleted ? `data-thread-id="${thread.id}"` : ''}>
-                            <div class="w-12 text-center mr-4">
-                                <div class="text-2xl font-bold">${thread.replies}</div>
-                                <div class="text-xs text-gray-500">Replies</div>
-                            </div>
-                            <div class="flex-grow">
-                                <p class="font-semibold text-blue-600 text-lg">${thread.title}</p>
-                                <p class="text-sm text-gray-600">Started by <span class="username-link" data-char-name="${thread.author}">${thread.author}</span></p>
-                            </div>
-                            <div class="w-40 text-sm text-right text-gray-500">
-                                <p>${thread.lastPost}</p>
-                            </div>
+                            <div class="w-12 text-center mr-4"><div class="text-2xl font-bold">${postCount}</div><div class="text-xs text-gray-500">Replies</div></div>
+                            <div class="flex-grow"><p class="font-semibold text-blue-600 text-lg">${thread.title}</p><p class="text-sm text-gray-600">Started by <span class="username-link" data-char-name="${thread.author}">${thread.author}</span></p></div>
+                            <div class="w-40 text-sm text-right text-gray-500"><p>${formatTimestamp(lastPostTimestamp, currentDate)}</p></div>
                         </div>
                     `;
                     threadListContainer.insertAdjacentHTML('beforeend', threadHtml);
@@ -228,206 +290,266 @@
                 const threadPosts = posts[threadId] || [];
                 const threadData = threads.find(t => t.id == threadId);
                 threadTitleEl.textContent = threadData.title;
-
                 postContainer.innerHTML = '';
                 threadPosts.forEach(post => {
                     const char = characters[post.author];
-                    const postHtml = `
-                        <div class="ips-card">
-                            <div class="ips-post">
-                                <div class="ips-post-author text-center">
-                                    <img src="${char.avatar}" alt="${char.name}" class="w-20 h-20 rounded-full mx-auto mb-2 border-2 border-gray-300">
-                                    <p class="font-bold text-lg"><span class="username-link" data-char-name="${post.author}">${char.name}</span></p>
-                                    <p class="text-sm text-gray-500">${char.title}</p>
+                    postContainer.insertAdjacentHTML('beforeend', `<div class="ips-card"><div class="ips-post"><div class="ips-post-author text-center"><img src="${char.avatar}" alt="${char.name}" class="w-20 h-20 rounded-full mx-auto mb-2 border-2 border-gray-300"><p class="font-bold text-lg"><span class="username-link" data-char-name="${post.author}">${char.name}</span></p><p class="text-sm text-gray-500">${char.title}</p></div><div class="ips-post-content"><p class="text-xs text-gray-500 mb-4">Posted ${formatTimestamp(post.timestamp, currentDate)}</p><div class="prose max-w-none">${post.content.replace(/\n/g, '<br>')}</div></div></div></div>`);
+                });
+            }
+            
+            function renderUserProfile(charName) {
+                const char = characters[charName]; if (!char) return;
+                profileContentContainer.innerHTML = `<div class="ips-header flex justify-between items-center"><h2 class="font-bold text-lg">${char.name}'s Profile</h2><button id="profile-back-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back</button></div><div class="flex flex-col md:flex-row p-6 gap-6"><div class="text-center w-full md:w-1/4"><img src="${char.avatar}" alt="${char.name}" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-300"><h3 class="text-2xl font-bold text-blue-700">${char.name}</h3><p class="text-gray-500">${char.title}</p></div><div class="w-full md:w-3/4"><h4 class="font-bold text-lg border-b border-gray-200 pb-2 mb-2">Biography</h4><p class="text-gray-700 leading-relaxed">${char.bio}</p></div></div>`;
+            }
+
+            function renderMessages() {
+                let messagesHtml = `
+                <div class="ips-card">
+                    <h2 class="ips-header font-bold text-lg">Private Messages</h2>
+                    <div class="p-4 space-y-4">`;
+                
+                if (messages.length === 0) {
+                    messagesHtml += `<p class="text-gray-500 text-center p-4">You have no messages.</p>`;
+                } else {
+                    const conversationPartners = [...new Set(messages.map(m => m.from === 'PlayerOne' ? m.to : m.from))];
+                    
+                    conversationPartners.forEach(partner => {
+                        const lastMessage = messages.filter(m => m.from === partner || m.to === partner).sort((a,b) => b.timestamp - a.timestamp)[0];
+                        const char = characters[partner];
+                        const unread = messages.some(m => (m.from === partner) && m.unread);
+
+                        messagesHtml += `
+                        <div class="message-thread-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer ${unread ? 'font-bold bg-blue-50' : 'font-normal'}" data-partner="${partner}">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <img src="${char.avatar}" alt="${char.name} Avatar" class="rounded-full w-10 h-10">
+                                <div>
+                                    <p class="username-link text-base" data-char-name="${partner}">${partner}</p>
+                                    <p class="text-sm text-gray-500 font-normal">${formatTimestamp(lastMessage.timestamp, currentDate)}</p>
                                 </div>
-                                <div class="ips-post-content">
-                                    <p class="text-xs text-gray-500 mb-4">Posted now</p>
-                                    <div class="prose max-w-none">
-                                        ${post.content.replace(/\n/g, '<br>')}
-                                    </div>
+                            </div>
+                            <p class="text-gray-800">${lastMessage.subject}</p>
+                            <p class="text-gray-600 mt-1 font-normal truncate">${lastMessage.from === 'PlayerOne' ? 'You: ' : ''}${lastMessage.content}</p>
+                        </div>
+                        `;
+                    });
+                }
+
+                messagesHtml += `</div></div>`;
+                messageListContainer.innerHTML = messagesHtml;
+            }
+
+            function renderMessageReply(partnerName) {
+                messageListContainer.classList.add('hidden');
+                
+                const partner = characters[partnerName];
+                const conversation = messages.filter(m => m.from === partnerName || m.to === partnerName).sort((a, b) => a.timestamp - b.timestamp);
+                
+                let replyHtml = `<div class="ips-card">
+                    <div class="ips-header flex justify-between items-center">
+                         <h2 class="font-bold text-lg">Conversation with ${partnerName}</h2>
+                         <button id="back-to-messages-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back to Inbox</button>
+                    </div>
+                    <div class="p-4 space-y-4 max-h-96 overflow-y-auto">`;
+
+                conversation.forEach(msg => {
+                    const sender = characters[msg.from];
+                    const isPlayer = msg.from === 'PlayerOne';
+                    replyHtml += `
+                        <div class="flex ${isPlayer ? 'justify-end' : 'justify-start'}">
+                            <div class="max-w-xl">
+                                <div class="flex items-center gap-2 ${isPlayer ? 'flex-row-reverse' : ''}">
+                                    <img src="${sender.avatar}" alt="${sender.name}" class="w-8 h-8 rounded-full">
+                                    <span class="font-semibold">${sender.name}</span>
+                                    <span class="text-xs text-gray-500">${formatTimestamp(msg.timestamp, currentDate)}</span>
+                                </div>
+                                <div class="mt-1 ${isPlayer ? 'bg-blue-100' : 'bg-gray-100'} p-3 rounded-lg">
+                                    <p>${msg.content}</p>
                                 </div>
                             </div>
                         </div>
                     `;
-                    postContainer.insertAdjacentHTML('beforeend', postHtml);
+                });
+
+                replyHtml += `</div>
+                    <div class="p-4 border-t border-gray-200">
+                        <textarea id="message-reply-textarea" class="w-full h-24 p-2 border border-gray-300 rounded-md" placeholder="Write your reply..."></textarea>
+                        <div class="text-right mt-2">
+                             <button id="send-reply-btn" data-reply-to="${partnerName}" class="px-6 py-2 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm">Send Reply</button>
+                        </div>
+                    </div>
+                </div>`;
+
+                messageReplyContainer.innerHTML = replyHtml;
+                messageReplyContainer.classList.remove('hidden');
+            }
+            
+            function renderNotes() {
+                mainContentScreens.notes.innerHTML = `<div class="ips-card"><h2 class="ips-header font-bold text-lg">Your Notes</h2><div class="p-6"><p class="text-gray-500 italic mb-6">This page automatically updates with important clues and information you discover.</p><ul id="notes-list" class="list-disc list-inside space-y-3"><li class="text-gray-700">The user <span class="font-semibold text-green-600">XeroCool</span> seems to know something about "old tech" being more than just obsolete hardware.</li></ul></div></div>`;
+            }
+
+            function updateMessageCount() {
+                const unreadCount = messages.filter(m => m.to === 'PlayerOne' && m.unread).length;
+                messageCountBadge.textContent = unreadCount;
+                if (unreadCount > 0) { messageCountBadge.classList.remove('hidden'); } else { messageCountBadge.classList.add('hidden'); }
+            }
+
+            function fullRender() {
+                renderClock();
+                renderThreadList();
+                renderMessages();
+                renderNotes();
+                updateMessageCount();
+                if (currentThreadId) { renderThreadDetail(currentThreadId); }
+            }
+
+            // --- GAME LOGIC ---
+            function passTime() {
+                if (timePassing) return; 
+                timePassing = true;
+                currentDate.setHours(currentDate.getHours() + 1); 
+                gameTurn++;
+
+                timePassOverlay.classList.remove('hidden');
+                timePassOverlay.classList.remove('opacity-0');
+                appContainer.classList.add('screen-fuzzy');
+                
+                setTimeout(() => {
+                    triggerEvents(gameTurn);
+                    timePassOverlay.classList.add('opacity-0'); 
+                    appContainer.classList.remove('screen-fuzzy');
+                    fullRender();
+                    setTimeout(() => { timePassOverlay.classList.add('hidden'); timePassing = false; }, 300);
+                }, 1500);
+            }
+            
+            function triggerEvents(turn) {
+                scheduledEvents.filter(e => e.turn === turn).forEach(event => {
+                    const eventData = { ...event.data, id: Date.now(), timestamp: new Date(currentDate) };
+                    if (event.type === 'newMessage') { messages.push(eventData); }
+                    if (event.type === 'newPost') {
+                        if (!posts[eventData.threadId]) posts[eventData.threadId] = [];
+                        posts[eventData.threadId].push(eventData);
+                        const thread = threads.find(t => t.id === eventData.threadId);
+                        if (thread) thread.timestamp = eventData.timestamp;
+                    }
                 });
             }
 
-            function renderUserProfile(charName) {
-                const char = characters[charName];
-                if (!char) return;
-
-                const profileHtml = `
-                    <div class="ips-header flex justify-between items-center">
-                        <h2 class="font-bold text-lg">${char.name}'s Profile</h2>
-                        <button id="profile-back-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back</button>
-                    </div>
-                    <div class="flex flex-col md:flex-row p-6 gap-6">
-                        <div class="text-center w-full md:w-1/4">
-                            <img src="${char.avatar}" alt="${char.name}" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-300">
-                            <h3 class="text-2xl font-bold text-blue-700">${char.name}</h3>
-                            <p class="text-gray-500">${char.title}</p>
-                        </div>
-                        <div class="w-full md:w-3/4">
-                            <h4 class="font-bold text-lg border-b border-gray-200 pb-2 mb-2">Biography</h4>
-                            <p class="text-gray-700 leading-relaxed">${char.bio}</p>
-                        </div>
-                    </div>
-                `;
-                profileContentContainer.innerHTML = profileHtml;
-                document.getElementById('profile-back-btn').addEventListener('click', hideProfile);
-            }
-
-            function renderMessages() {
-                mainContentScreens.messages.innerHTML = `
-                <div class="ips-card">
-                    <h2 class="ips-header font-bold text-lg">Private Messages</h2>
-                    <div class="p-4 space-y-4">
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center space-x-3 mb-2">
-                                <img src="https://placehold.co/40x40/16a34a/ffffff?text=X" alt="XeroCool Avatar" class="rounded-full w-10 h-10">
-                                <div>
-                                    <p class="username-link" data-char-name="XeroCool">XeroCool</p>
-                                    <p class="text-sm text-gray-500">2 hours ago</p>
-                                </div>
-                            </div>
-                            <p class="font-bold text-gray-800">RE: Your post about old tech</p>
-                            <p class="text-gray-600 mt-1">Hey, saw your post. You know, some of that 'old tech' isn't as dead as you think. Some of it is just... waiting. Be careful what you go looking for.</p>
-                        </div>
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center space-x-3 mb-2">
-                                <img src="https://placehold.co/40x40/f97316/ffffff?text=D" alt="DietDave Avatar" class="rounded-full w-10 h-10">
-                                <div>
-                                    <p class="username-link" data-char-name="DietDave">DietDave</p>
-                                    <p class="text-sm text-gray-500">1 day ago</p>
-                                </div>
-                            </div>
-                            <p class="font-bold text-gray-800">Keto diet question</p>
-                            <p class="text-gray-600 mt-1">Thanks for the advice in the health thread! I'm going to try that supplement you mentioned. Really appreciate it!</p>
-                        </div>
-                    </div>
-                </div>`;
-            }
-
-            function renderNotes() {
-                mainContentScreens.notes.innerHTML = `
-                 <div class="ips-card">
-                    <h2 class="ips-header font-bold text-lg">Your Notes</h2>
-                    <div class="p-6">
-                        <p class="text-gray-500 italic mb-6">This page automatically updates with important clues and information you discover.</p>
-                        <ul class="list-disc list-inside space-y-3">
-                            <li class="text-gray-700">The user <span class="font-semibold text-green-600">XeroCool</span> seems to know something about "old tech" being more than just obsolete hardware. They sent a cryptic private message.</li>
-                            <li class="text-gray-700">A post by <span class="font-semibold text-red-600">Glitch</span> mentioned strange energy readings from old server farms, but they deleted the post quickly.</li>
-                            <li class="text-gray-700">The "Health & Fitness" forum seems normal, but <span class="font-semibold text-orange-500">DietDave</span> is almost aggressively cheerful.</li>
-                        </ul>
-                    </div>
-                </div>`;
-            }
-
-
             // --- UI LOGIC ---
-            
             function showScreen(screenId) {
-                // Hide all screens first
-                Object.values(mainContentScreens).forEach(s => s.classList.add('hidden'));
-
-                const targetScreen = mainContentScreens[screenId];
-                if (targetScreen) {
-                    targetScreen.classList.remove('hidden');
+                if (screenId === 'messages') {
+                    messages.forEach(m => { if(m.to === 'PlayerOne') m.unread = false; });
+                    showMessagesList();
+                    updateMessageCount();
                 }
+                
+                Object.values(mainContentScreens).forEach(s => s.classList.add('hidden'));
+                mainContentScreens[screenId].classList.remove('hidden');
 
-                // Update nav button active states
                 Object.values(navButtons).forEach(b => {
                     b.classList.remove('bg-blue-600', 'text-white');
                     b.classList.add('text-gray-600', 'hover:bg-gray-100');
                 });
-                
-                const targetNavButton = navButtons[screenId];
-                if (targetNavButton) {
-                    targetNavButton.classList.add('bg-blue-600', 'text-white');
-                    targetNavButton.classList.remove('text-gray-600', 'hover:bg-gray-100');
+                if (navButtons[screenId]) {
+                    navButtons[screenId].classList.add('bg-blue-600', 'text-white');
+                    navButtons[screenId].classList.remove('text-gray-600', 'hover:bg-gray-100');
                 }
             }
 
-            function showThreadDetail(threadId) {
+            function showMessagesList() {
+                messageReplyContainer.classList.add('hidden');
+                messageReplyContainer.innerHTML = '';
+                renderMessages();
+                messageListContainer.classList.remove('hidden');
+            }
+
+            function showThreadDetail(threadId) { 
                 currentThreadId = threadId;
                 forumListCard.classList.add('hidden');
                 renderThreadDetail(threadId);
                 threadDetailContainer.classList.remove('hidden');
             }
 
-            function showForumList() {
-                currentThreadId = null;
-                threadDetailContainer.classList.add('hidden');
-                forumListCard.classList.remove('hidden');
+            function showForumList() { 
+                currentThreadId = null; 
+                threadDetailContainer.classList.add('hidden'); 
+                forumListCard.classList.remove('hidden'); 
             }
 
             function showProfile(charName) {
                 const currentScreen = Object.entries(mainContentScreens).find(([key, screen]) => !screen.classList.contains('hidden'));
                 previousScreenId = currentScreen ? currentScreen[0] : 'forum';
-
                 Object.values(mainContentScreens).forEach(s => s.classList.add('hidden'));
-                
-                renderUserProfile(charName);
+                renderUserProfile(charName); 
                 mainContentScreens.profile.classList.remove('hidden');
             }
 
             function hideProfile() {
                 mainContentScreens.profile.classList.add('hidden');
-                if(previousScreenId) {
-                    showScreen(previousScreenId);
-                } else {
-                    showScreen('forum'); // Fallback
-                }
+                if(previousScreenId) { showScreen(previousScreenId); } else { showScreen('forum'); }
                 previousScreenId = null;
             }
             
             // --- EVENT LISTENERS ---
-            navButtons.forum.addEventListener('click', () => {
-                showScreen('forum');
-                showForumList();
-            });
+            navButtons.forum.addEventListener('click', () => { showScreen('forum'); showForumList(); });
             navButtons.messages.addEventListener('click', () => showScreen('messages'));
             notesIconButton.addEventListener('click', () => showScreen('notes'));
-            
+            timePassBtn.addEventListener('click', passTime);
             backToForumBtn.addEventListener('click', showForumList);
 
             postReplyBtn.addEventListener('click', () => {
                 const replyContent = replyTextarea.value.trim();
                 if (replyContent && currentThreadId) {
-                    const newPost = { author: 'PlayerOne', content: replyContent };
+                    const newPost = { author: 'PlayerOne', content: replyContent, timestamp: new Date(currentDate) };
                     posts[currentThreadId].push(newPost);
-                    
                     const thread = threads.find(t => t.id == currentThreadId);
-                    thread.replies++;
-                    
+                    thread.timestamp = new Date(currentDate);
                     replyTextarea.value = '';
                     renderThreadDetail(currentThreadId);
-                    renderThreadList(); // To update reply count
+                    renderThreadList();
                 }
             });
 
             appContainer.addEventListener('click', (e) => {
                 const threadTarget = e.target.closest('[data-thread-id]');
-                if (threadTarget) {
-                    const threadId = threadTarget.dataset.threadId;
-                    showThreadDetail(threadId);
-                    return; 
-                }
+                if (threadTarget) { showThreadDetail(threadTarget.dataset.threadId); return; }
 
-                const profileTarget = e.target.closest('[data-char-name]');
-                if (profileTarget) {
-                    e.preventDefault();
-                    const charName = profileTarget.dataset.charName;
-                    showProfile(charName);
-                    return;
+                const profileTarget = e.target.closest('.username-link');
+                if (profileTarget) { e.preventDefault(); showProfile(profileTarget.dataset.charName); return; }
+
+                const messageThreadTarget = e.target.closest('.message-thread-item');
+                if (messageThreadTarget) { renderMessageReply(messageThreadTarget.dataset.partner); return; }
+
+                const backToMessagesBtn = e.target.closest('#back-to-messages-btn');
+                if (backToMessagesBtn) { showMessagesList(); return; }
+                
+                const profileBackBtn = e.target.closest('#profile-back-btn');
+                if (profileBackBtn) { hideProfile(); return; }
+
+                const sendReplyBtn = e.target.closest('#send-reply-btn');
+                if (sendReplyBtn) {
+                    const recipient = sendReplyBtn.dataset.replyTo;
+                    const textarea = document.getElementById('message-reply-textarea');
+                    const content = textarea.value.trim();
+                    if (content && recipient) {
+                        const originalMessage = messages.filter(m => m.from === recipient || m.to === recipient).sort((a,b) => b.timestamp - a.timestamp)[0];
+                        messages.push({
+                            id: Date.now(),
+                            from: 'PlayerOne',
+                            to: recipient,
+                            subject: `RE: ${originalMessage.subject}`,
+                            content: content,
+                            timestamp: new Date(currentDate),
+                            unread: false
+                        });
+                        textarea.value = '';
+                        renderMessageReply(recipient);
+                    }
                 }
             });
             
             // --- INITIALIZATION ---
-            renderThreadList();
-            renderMessages();
-            renderNotes();
+            fullRender();
             showScreen('forum');
         });
     </script>

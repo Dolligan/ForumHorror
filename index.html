@@ -103,9 +103,9 @@
                     <div class="ips-card mt-6">
                         <div class="ips-header font-bold">Write a reply...</div>
                         <div class="p-4">
-                            <textarea class="w-full h-32 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Type your response here..."></textarea>
+                            <textarea id="reply-textarea" class="w-full h-32 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Type your response here..."></textarea>
                             <div class="text-right mt-2">
-                                <button class="px-6 py-2 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm">Post Reply</button>
+                                <button id="post-reply-btn" class="px-6 py-2 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm">Post Reply</button>
                             </div>
                         </div>
                     </div>
@@ -114,12 +114,12 @@
 
             <!-- Screen 2: Messages View -->
             <div id="screen-messages" class="hidden">
-                <!-- Message content as before -->
+                <!-- Message content will be populated by JS -->
             </div>
 
             <!-- Screen 3: Notes View -->
             <div id="screen-notes" class="hidden">
-                 <!-- Notes content as before -->
+                 <!-- Notes content will be populated by JS -->
             </div>
             
             <!-- Screen 4: Profile View -->
@@ -149,8 +149,8 @@
 
             const threads = [
                 { id: 1, title: 'Is retro-computing making a comeback?', author: 'XeroCool', replies: 3, lastPost: '2 minutes ago' },
-                { id: 2, title: 'What Sci-Fi movie blew your mind recently?', author: 'QuantumLeaper', replies: 15, lastPost: '25 minutes ago' },
-                { id: 3, title: 'Keto Diet - Tips for beginners?', author: 'DietDave', replies: 8, lastPost: '1 hour ago' },
+                { id: 2, title: 'What Sci-Fi movie blew your mind recently?', author: 'QuantumLeaper', replies: 1, lastPost: '25 minutes ago' },
+                { id: 3, title: 'Keto Diet - Tips for beginners?', author: 'DietDave', replies: 1, lastPost: '1 hour ago' },
                 { id: 4, title: 'Strange server energy readings [DELETED]', author: 'Glitch', replies: 0, lastPost: '3 hours ago', deleted: true },
                 { id: 5, title: 'Best language for a beginner coder in 2025?', author: 'PlayerOne', replies: 1, lastPost: '5 hours ago' },
             ];
@@ -167,11 +167,119 @@
                  ],
                  3: [
                     { author: 'DietDave', content: "Hey everyone! Day 20 of my new super-keto plan and I feel AMAZING! The energy is just unreal! You have to try it!" },
+                 ],
+                 5: [
+                    { author: 'PlayerOne', content: "Hey, I'm new to coding, what's a good language to start with?" },
+                    { author: 'XeroCool', content: "Forget Python or JavaScript. Learn C. Learn how the machine actually thinks."}
                  ]
             };
 
-            // Re-populating hidden screens with placeholder content
-            document.getElementById('screen-messages').innerHTML = `
+            // --- UI ELEMENT REFERENCES ---
+            const appContainer = document.getElementById('app');
+            const mainContentScreens = {
+                forum: document.getElementById('screen-forum'),
+                messages: document.getElementById('screen-messages'),
+                notes: document.getElementById('screen-notes'),
+                profile: document.getElementById('screen-profile'),
+            };
+            const navButtons = {
+                forum: document.getElementById('nav-forum'),
+                messages: document.getElementById('nav-messages'),
+            };
+            const notesIconButton = document.getElementById('nav-notes-icon');
+            const threadListContainer = document.getElementById('thread-list');
+            const threadDetailContainer = document.getElementById('thread-detail');
+            const forumListCard = document.getElementById('forum-list-card');
+            const postContainer = document.getElementById('post-container');
+            const threadTitleEl = document.getElementById('thread-title');
+            const backToForumBtn = document.getElementById('back-to-forum');
+            const profileContentContainer = document.getElementById('profile-content');
+            const replyTextarea = document.getElementById('reply-textarea');
+            const postReplyBtn = document.getElementById('post-reply-btn');
+
+            let previousScreenId = null;
+            let currentThreadId = null;
+
+            // --- RENDER FUNCTIONS ---
+            
+            function renderThreadList() {
+                threadListContainer.innerHTML = '';
+                threads.forEach(thread => {
+                    const threadHtml = `
+                        <div class="flex items-center p-4 border-t border-gray-200 hover:bg-gray-50 ${thread.deleted ? 'opacity-50' : 'cursor-pointer'}" ${!thread.deleted ? `data-thread-id="${thread.id}"` : ''}>
+                            <div class="w-12 text-center mr-4">
+                                <div class="text-2xl font-bold">${thread.replies}</div>
+                                <div class="text-xs text-gray-500">Replies</div>
+                            </div>
+                            <div class="flex-grow">
+                                <p class="font-semibold text-blue-600 text-lg">${thread.title}</p>
+                                <p class="text-sm text-gray-600">Started by <span class="username-link" data-char-name="${thread.author}">${thread.author}</span></p>
+                            </div>
+                            <div class="w-40 text-sm text-right text-gray-500">
+                                <p>${thread.lastPost}</p>
+                            </div>
+                        </div>
+                    `;
+                    threadListContainer.insertAdjacentHTML('beforeend', threadHtml);
+                });
+            }
+
+            function renderThreadDetail(threadId) {
+                const threadPosts = posts[threadId] || [];
+                const threadData = threads.find(t => t.id == threadId);
+                threadTitleEl.textContent = threadData.title;
+
+                postContainer.innerHTML = '';
+                threadPosts.forEach(post => {
+                    const char = characters[post.author];
+                    const postHtml = `
+                        <div class="ips-card">
+                            <div class="ips-post">
+                                <div class="ips-post-author text-center">
+                                    <img src="${char.avatar}" alt="${char.name}" class="w-20 h-20 rounded-full mx-auto mb-2 border-2 border-gray-300">
+                                    <p class="font-bold text-lg"><span class="username-link" data-char-name="${post.author}">${char.name}</span></p>
+                                    <p class="text-sm text-gray-500">${char.title}</p>
+                                </div>
+                                <div class="ips-post-content">
+                                    <p class="text-xs text-gray-500 mb-4">Posted now</p>
+                                    <div class="prose max-w-none">
+                                        ${post.content.replace(/\n/g, '<br>')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    postContainer.insertAdjacentHTML('beforeend', postHtml);
+                });
+            }
+
+            function renderUserProfile(charName) {
+                const char = characters[charName];
+                if (!char) return;
+
+                const profileHtml = `
+                    <div class="ips-header flex justify-between items-center">
+                        <h2 class="font-bold text-lg">${char.name}'s Profile</h2>
+                        <button id="profile-back-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back</button>
+                    </div>
+                    <div class="flex flex-col md:flex-row p-6 gap-6">
+                        <div class="text-center w-full md:w-1/4">
+                            <img src="${char.avatar}" alt="${char.name}" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-300">
+                            <h3 class="text-2xl font-bold text-blue-700">${char.name}</h3>
+                            <p class="text-gray-500">${char.title}</p>
+                        </div>
+                        <div class="w-full md:w-3/4">
+                            <h4 class="font-bold text-lg border-b border-gray-200 pb-2 mb-2">Biography</h4>
+                            <p class="text-gray-700 leading-relaxed">${char.bio}</p>
+                        </div>
+                    </div>
+                `;
+                profileContentContainer.innerHTML = profileHtml;
+                document.getElementById('profile-back-btn').addEventListener('click', hideProfile);
+            }
+
+            function renderMessages() {
+                mainContentScreens.messages.innerHTML = `
                 <div class="ips-card">
                     <h2 class="ips-header font-bold text-lg">Private Messages</h2>
                     <div class="p-4 space-y-4">
@@ -199,7 +307,10 @@
                         </div>
                     </div>
                 </div>`;
-            document.getElementById('screen-notes').innerHTML = `
+            }
+
+            function renderNotes() {
+                mainContentScreens.notes.innerHTML = `
                  <div class="ips-card">
                     <h2 class="ips-header font-bold text-lg">Your Notes</h2>
                     <div class="p-6">
@@ -211,19 +322,115 @@
                         </ul>
                     </div>
                 </div>`;
+            }
 
 
-            // --- UI ELEMENT REFERENCES ---
-            const appContainer = document.getElementById('app');
-            const mainContentScreens = [
-                document.getElementById('screen-forum'),
-                document.getElementById('screen-messages'),
-                document.getElementById('screen-notes'),
-                document.getElementById('screen-profile'),
-            ];
-            const navButtons = {
-                forum: document.getElementById('nav-forum'),
-                messages: document.getElementById('nav-messages'),
-            };
-            const notesIconButton = document.getElementById('nav-notes-icon');
-            const threadListContainer = document.getElementById('thread-list
+            // --- UI LOGIC ---
+            
+            function showScreen(screenId) {
+                // Hide all screens first
+                Object.values(mainContentScreens).forEach(s => s.classList.add('hidden'));
+
+                const targetScreen = mainContentScreens[screenId];
+                if (targetScreen) {
+                    targetScreen.classList.remove('hidden');
+                }
+
+                // Update nav button active states
+                Object.values(navButtons).forEach(b => {
+                    b.classList.remove('bg-blue-600', 'text-white');
+                    b.classList.add('text-gray-600', 'hover:bg-gray-100');
+                });
+                
+                const targetNavButton = navButtons[screenId];
+                if (targetNavButton) {
+                    targetNavButton.classList.add('bg-blue-600', 'text-white');
+                    targetNavButton.classList.remove('text-gray-600', 'hover:bg-gray-100');
+                }
+            }
+
+            function showThreadDetail(threadId) {
+                currentThreadId = threadId;
+                forumListCard.classList.add('hidden');
+                renderThreadDetail(threadId);
+                threadDetailContainer.classList.remove('hidden');
+            }
+
+            function showForumList() {
+                currentThreadId = null;
+                threadDetailContainer.classList.add('hidden');
+                forumListCard.classList.remove('hidden');
+            }
+
+            function showProfile(charName) {
+                const currentScreen = Object.entries(mainContentScreens).find(([key, screen]) => !screen.classList.contains('hidden'));
+                previousScreenId = currentScreen ? currentScreen[0] : 'forum';
+
+                Object.values(mainContentScreens).forEach(s => s.classList.add('hidden'));
+                
+                renderUserProfile(charName);
+                mainContentScreens.profile.classList.remove('hidden');
+            }
+
+            function hideProfile() {
+                mainContentScreens.profile.classList.add('hidden');
+                if(previousScreenId) {
+                    showScreen(previousScreenId);
+                } else {
+                    showScreen('forum'); // Fallback
+                }
+                previousScreenId = null;
+            }
+            
+            // --- EVENT LISTENERS ---
+            navButtons.forum.addEventListener('click', () => {
+                showScreen('forum');
+                showForumList();
+            });
+            navButtons.messages.addEventListener('click', () => showScreen('messages'));
+            notesIconButton.addEventListener('click', () => showScreen('notes'));
+            
+            backToForumBtn.addEventListener('click', showForumList);
+
+            postReplyBtn.addEventListener('click', () => {
+                const replyContent = replyTextarea.value.trim();
+                if (replyContent && currentThreadId) {
+                    const newPost = { author: 'PlayerOne', content: replyContent };
+                    posts[currentThreadId].push(newPost);
+                    
+                    const thread = threads.find(t => t.id == currentThreadId);
+                    thread.replies++;
+                    
+                    replyTextarea.value = '';
+                    renderThreadDetail(currentThreadId);
+                    renderThreadList(); // To update reply count
+                }
+            });
+
+            appContainer.addEventListener('click', (e) => {
+                const threadTarget = e.target.closest('[data-thread-id]');
+                if (threadTarget) {
+                    const threadId = threadTarget.dataset.threadId;
+                    showThreadDetail(threadId);
+                    return; 
+                }
+
+                const profileTarget = e.target.closest('[data-char-name]');
+                if (profileTarget) {
+                    e.preventDefault();
+                    const charName = profileTarget.dataset.charName;
+                    showProfile(charName);
+                    return;
+                }
+            });
+            
+            // --- INITIALIZATION ---
+            renderThreadList();
+            renderMessages();
+            renderNotes();
+            showScreen('forum');
+        });
+    </script>
+
+</body>
+</html>

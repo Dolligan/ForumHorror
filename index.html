@@ -157,7 +157,7 @@
             
             <!-- Window View (Right Column) -->
             <aside id="window-view-container" class="lg:col-span-1">
-                <!-- SVG image will be injected here -->
+                <!-- Image will be injected here -->
             </aside>
         </div>
 
@@ -172,6 +172,7 @@
             let currentDate = new Date('2025-04-01T03:00:00');
             let previousScreenId = null;
             let currentThreadId = null;
+            let anomalyActive = false;
             
             // --- GAME DATA ---
             const characters = {
@@ -182,7 +183,7 @@
                 'DietDave': { name: 'DietDave', avatar: 'https://placehold.co/80x80/f97316/ffffff?text=D', title: 'Member', bio: 'A health and fitness enthusiast whose relentless positivity can be a bit unsettling. Seems almost too happy, all the time.' },
                 'QuantumLeaper': { name: 'QuantumLeaper', avatar: 'https://placehold.co/80x80/64748b/ffffff?text=Q', title: 'Member', bio: 'Loves science fiction and fringe science. Their posts are full of speculation about alternate realities, time travel, and the nature of consciousness.' },
             };
-
+            
             let threads = [
                 { id: 1, title: 'Is retro-computing making a comeback?', author: 'XeroCool', timestamp: new Date('2025-04-01T01:15:00') },
                 { id: 2, title: 'What Sci-Fi movie blew your mind recently?', author: 'QuantumLeaper', timestamp: new Date('2025-04-01T00:30:00')},
@@ -200,25 +201,38 @@
             
             let messages = [];
 
-            // --- Simplified event list for testing ---
             const scheduledEvents = [
                  { turn: 1, type: 'newMessage', data: { from: 'XeroCool', to: 'Verity', subject: 'Welcome to the forum', content: 'Hey, noticed you were new. Just wanted to say welcome. This place has... history. Keep your eyes open.', unread: true } },
                  { turn: 2, type: 'newPost', data: { threadId: 1, author: 'Admin', content: 'TEST POST: Please ignore.' } }
             ];
-            
-            const windowViewGraphics = [
-                // Turn 0 (3 AM)
-                `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto rounded-md shadow-lg"><rect fill="#000033" width="200" height="150"/><circle cx="25" cy="40" r="1" fill="white"/><circle cx="50" cy="20" r="0.8" fill="white"/><circle cx="80" cy="50" r="1.2" fill="white"/><circle cx="110" cy="30" r="0.7" fill="white"/><circle cx="150" cy="60" r="1" fill="white"/><circle cx="180" cy="45" r="0.9" fill="white"/><path d="M0 100 Q 50 80, 100 105 T 200 90 L 200 150 L 0 150 Z" fill="#001122"/><rect x="120" y="70" width="40" height="30" fill="#000"/><polygon points="115,70 165,70 140,50" fill="#000"/></svg>`,
-                // Turn 1 (4 AM)
-                `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto rounded-md shadow-lg"><defs><linearGradient id="grad1" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" style="stop-color:#000033;stop-opacity:1" /><stop offset="100%" style="stop-color:#2a446c;stop-opacity:1" /></linearGradient></defs><rect fill="url(#grad1)" width="200" height="150"/><path d="M0 100 Q 50 80, 100 105 T 200 90 L 200 150 L 0 150 Z" fill="#001122"/><rect x="120" y="70" width="40" height="30" fill="#000"/><polygon points="115,70 165,70 140,50" fill="#000"/></svg>`,
-                // Turn 2 (5 AM)
-                `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto rounded-md shadow-lg"><defs><linearGradient id="grad2" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" style="stop-color:#2a446c;stop-opacity:1" /><stop offset="100%" style="stop-color:#ff9966;stop-opacity:1" /></linearGradient></defs><rect fill="url(#grad2)" width="200" height="150"/><path d="M0 100 Q 50 80, 100 105 T 200 90 L 200 150 L 0 150 Z" fill="#002211"/><rect x="120" y="70" width="40" height="30" fill="#222"/><polygon points="115,70 165,70 140,50" fill="#222"/></svg>`,
-                // Turn 3 (6 AM)
-                `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto rounded-md shadow-lg"><defs><linearGradient id="grad3" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" style="stop-color:#ff9966;stop-opacity:1" /><stop offset="100%" style="stop-color:#87CEEB;stop-opacity:1" /></linearGradient></defs><rect fill="url(#grad3)" width="200" height="150"/><circle cx="170" cy="40" r="15" fill="yellow" /><path d="M0 100 Q 50 80, 100 105 T 200 90 L 200 150 L 0 150 Z" fill="#114422"/><rect x="120" y="70" width="40" height="30" fill="#6B4226"/><polygon points="115,70 165,70 140,50" fill="#5C4033"/></svg>`,
-                // Turn 4 (7 AM)
-                `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto rounded-md shadow-lg"><rect fill="#87CEEB" width="200" height="150"/><path d="M0 100 Q 50 80, 100 105 T 200 90 L 200 150 L 0 150 Z" fill="#228B22"/><rect x="120" y="70" width="40" height="30" fill="#A0522D"/><polygon points="115,70 165,70 140,50" fill="#8B4513"/></svg>`,
-            ];
 
+            const windowImages = {
+                normal: {
+                    0: 'https://placehold.co/200x150/000033/FFFFFF?text=12AM+Normal', 1: 'https://placehold.co/200x150/000033/FFFFFF?text=1AM+Normal', 2: 'https://placehold.co/200x150/000033/FFFFFF?text=2AM+Normal',
+                    3: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/3am.png?raw=true',
+                    4: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/4am.png?raw=true',
+                    5: 'https://placehold.co/200x150/ff9966/FFFFFF?text=5AM+Normal',
+                    6: 'https://placehold.co/200x150/87CEEB/000000?text=6AM+Normal', 7: 'https://placehold.co/200x150/87CEFA/000000?text=7AM+Normal', 8: 'https://placehold.co/200x150/87CEFA/000000?text=8AM+Normal',
+                    9: 'https://placehold.co/200x150/87CEFA/000000?text=9AM+Normal', 10: 'https://placehold.co/200x150/87CEFA/000000?text=10AM+Normal', 11: 'https://placehold.co/200x150/87CEFA/000000?text=11AM+Normal',
+                    12: 'https://placehold.co/200x150/87CEFA/000000?text=12PM+Normal', 13: 'https://placehold.co/200x150/87CEFA/000000?text=1PM+Normal', 14: 'https://placehold.co/200x150/87CEFA/000000?text=2PM+Normal',
+                    15: 'https://placehold.co/200x150/87CEFA/000000?text=3PM+Normal', 16: 'https://placehold.co/200x150/87CEFA/000000?text=4PM+Normal', 17: 'https://placehold.co/200x150/b1daef/000000?text=5PM+Normal',
+                    18: 'https://placehold.co/200x150/FF7F50/FFFFFF?text=6PM+Normal', 19: 'https://placehold.co/200x150/4682B4/FFFFFF?text=7PM+Normal', 20: 'https://placehold.co/200x150/00008B/FFFFFF?text=8PM+Normal',
+                    21: 'https://placehold.co/200x150/000033/FFFFFF?text=9PM+Normal', 22: 'https://placehold.co/200x150/000033/FFFFFF?text=10PM+Normal', 23: 'https://placehold.co/200x150/000033/FFFFFF?text=11PM+Normal'
+                },
+                anomaly: {
+                    0: 'https://placehold.co/200x150/000033/FF0000?text=12AM+Anomaly', 1: 'https://placehold.co/200x150/000033/FF0000?text=1AM+Anomaly', 2: 'https://placehold.co/200x150/000033/FF0000?text=2AM+Anomaly',
+                    3: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/3amanom.png?raw=true',
+                    4: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/4amanom.png?raw=true',
+                    5: 'https://placehold.co/200x150/ff9966/FF0000?text=5AM+Anomaly',
+                    6: 'https://placehold.co/200x150/87CEEB/FF0000?text=6AM+Anomaly', 7: 'https://placehold.co/200x150/87CEFA/FF0000?text=7AM+Anomaly', 8: 'https://placehold.co/200x150/87CEFA/FF0000?text=8AM+Anomaly',
+                    9: 'https://placehold.co/200x150/87CEFA/FF0000?text=9AM+Anomaly', 10: 'https://placehold.co/200x150/87CEFA/FF0000?text=10AM+Anomaly', 11: 'https://placehold.co/200x150/87CEFA/FF0000?text=11AM+Anomaly',
+                    12: 'https://placehold.co/200x150/87CEFA/FF0000?text=12PM+Anomaly', 13: 'https://placehold.co/200x150/87CEFA/FF0000?text=1PM+Anomaly', 14: 'https://placehold.co/200x150/87CEFA/FF0000?text=2PM+Anomaly',
+                    15: 'https://placehold.co/200x150/87CEFA/FF0000?text=3PM+Anomaly', 16: 'https://placehold.co/200x150/87CEFA/FF0000?text=4PM+Anomaly', 17: 'https://placehold.co/200x150/b1daef/FF0000?text=5PM+Anomaly',
+                    18: 'https://placehold.co/200x150/FF7F50/000000?text=6PM+Anomaly', 19: 'https://placehold.co/200x150/4682B4/FF0000?text=7PM+Anomaly', 20: 'https://placehold.co/200x150/00008B/FF0000?text=8PM+Anomaly',
+                    21: 'https://placehold.co/200x150/000033/FF0000?text=9PM+Anomaly', 22: 'https://placehold.co/200x150/000033/FF0000?text=10PM+Anomaly', 23: 'https://placehold.co/200x150/000033/FF0000?text=11PM+Anomaly'
+                }
+            };
+            
             // --- UI ELEMENT REFERENCES ---
             const ui = {
                 app: document.getElementById('app'),
@@ -257,7 +271,12 @@
 
             // --- RENDER FUNCTIONS ---
             const render = {
-                windowView: () => { ui.windowViewContainer.innerHTML = windowViewGraphics[gameTurn] || windowViewGraphics.slice(-1)[0]; },
+                windowView: () => {
+                    const hour = currentDate.getHours();
+                    const state = anomalyActive ? 'anomaly' : 'normal';
+                    const imageUrl = windowImages[state][hour];
+                    ui.windowViewContainer.innerHTML = `<img src="${imageUrl}" alt="View from the window" class="w-full h-auto rounded-md shadow-lg" onerror="this.onerror=null;this.src='https://placehold.co/200x150/ccc/FFFFFF?text=Error';">`;
+                },
                 clock: () => { ui.dateTimeDisplay.textContent = formatClock(currentDate); },
                 threadList: () => {
                     ui.threadList.innerHTML = '';
@@ -334,14 +353,9 @@
                     Object.values(ui.screens).forEach(s => s.classList.add('hidden'));
                     ui.screens[screenId].classList.remove('hidden');
                     ui.windowViewContainer.classList.toggle('hidden', screenId !== 'forum');
-                    Object.values(ui.navButtons).forEach(b => {
-                        b.classList.remove('bg-blue-600', 'text-white');
-                        b.classList.add('text-gray-600', 'hover:bg-gray-100');
-                    });
-                    if (ui.navButtons[screenId]) {
+                    Object.values(ui.navButtons).forEach(b => {b.classList.remove('bg-blue-600', 'text-white', 'bg-gray-200'); if(b.id !== 'nav-forum' && b.id !=='nav-messages') b.classList.add('hover:bg-gray-100'); });
+                    if (ui.navButtons[screenId] && ui.navButtons[screenId].id.startsWith('nav-')) {
                         ui.navButtons[screenId].classList.add('bg-blue-600', 'text-white');
-                    } else if (screenId === 'notes') {
-                         ui.navButtons.notes.classList.add('bg-gray-200'); // Visual feedback for icon button
                     }
                 },
                 showMessagesList: () => { ui.messageReplyContainer.classList.add('hidden'); ui.messageReplyContainer.innerHTML = ''; render.messages(); ui.messageListContainer.classList.remove('hidden'); },

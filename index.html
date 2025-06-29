@@ -9,100 +9,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f3f6;
-        }
-        .ips-card {
-            background-color: #ffffff;
-            border: 1px solid #dce1e8;
-            border-radius: 4px;
-        }
-        .ips-header {
-            background-color: #f7f8fa;
-            border-bottom: 1px solid #dce1e8;
-            padding: 12px 16px;
-        }
-        .ips-post {
-            display: grid;
-            grid-template-columns: 180px 1fr;
-            gap: 20px;
-        }
-        .ips-post-author {
-            background-color: #f7f8fa;
-            padding: 16px;
-            border-right: 1px solid #dce1e8;
-            border-radius: 4px 0 0 4px;
-        }
-        .ips-post-content {
-            padding: 16px;
-        }
-        .username-link {
-            cursor: pointer;
-            font-weight: 600;
-            color: #2563eb; /* blue-600 */
-        }
-        .username-link:hover {
-            text-decoration: underline;
-        }
-        #time-pass-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 2rem;
-            font-weight: bold;
-            flex-direction: column;
-            transition: opacity 0.3s ease-in-out;
-            pointer-events: none;
-        }
-        #app.screen-fuzzy {
-            filter: blur(4px) grayscale(50%);
-            transition: filter 0.5s ease;
-        }
-        .digital-clock {
-            font-family: 'Orbitron', sans-serif;
-            background-color: #1a202c; /* A dark slate color */
-            color: #48bb78; /* A vibrant green */
-            text-shadow: 0 0 5px #48bb78, 0 0 10px #48bb78;
-            padding: 1rem;
-            border-radius: 0.375rem;
-            text-align: center;
-        }
-        .digital-clock .time {
-            font-size: 1.875rem; /* 30px */
-            line-height: 2.25rem; /* 36px */
-            letter-spacing: 0.1em;
-        }
-        .digital-clock .date {
-            font-size: 0.75rem; /* 12px */
-            line-height: 1rem; /* 16px */
-            letter-spacing: 0.05em;
-            opacity: 0.8;
-            margin-top: 0.25rem;
-        }
-        @media (max-width: 1023px) {
-            #window-view-container {
-                display: none;
-            }
-        }
-        @media (max-width: 768px) {
-            .ips-post {
-                grid-template-columns: 1fr;
-            }
-            .ips-post-author {
-                border-right: none;
-                border-bottom: 1px solid #dce1e8;
-                border-radius: 4px 4px 0 0;
-            }
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f3f6; }
+        .ips-card { background-color: #ffffff; border: 1px solid #dce1e8; border-radius: 4px; }
+        .ips-header { background-color: #f7f8fa; border-bottom: 1px solid #dce1e8; padding: 12px 16px; }
+        .ips-post { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
+        .ips-post-author { background-color: #f7f8fa; padding: 16px; border-right: 1px solid #dce1e8; border-radius: 4px 0 0 4px; }
+        .ips-post-content { padding: 16px; }
+        .username-link { cursor: pointer; font-weight: 600; color: #2563eb; }
+        .username-link:hover { text-decoration: underline; }
+        #time-pass-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center; color: white; font-size: 2rem; font-weight: bold; flex-direction: column; transition: opacity 0.3s ease-in-out; pointer-events: none; }
+        #app.screen-fuzzy { filter: blur(4px) grayscale(50%); transition: filter 0.5s ease; }
+        .digital-clock { font-family: 'Orbitron', sans-serif; background-color: #1a202c; color: #48bb78; text-shadow: 0 0 5px #48bb78, 0 0 10px #48bb78; padding: 1rem; border-radius: 0.375rem; text-align: center; }
+        .digital-clock .time { font-size: 1.875rem; line-height: 2.25rem; letter-spacing: 0.1em; }
+        .digital-clock .date { font-size: 0.75rem; line-height: 1rem; opacity: 0.8; margin-top: 0.25rem; }
+        @media (max-width: 1023px) { #sidebar-container { display: none; } }
+        @media (max-width: 768px) { .ips-post { grid-template-columns: 1fr; } .ips-post-author { border-right: none; border-bottom: 1px solid #dce1e8; border-radius: 4px 4px 0 0; } }
     </style>
 </head>
 <body class="text-gray-800">
@@ -187,250 +108,245 @@
         </div>
 
     </div>
-
+    
+    <!-- SCRIPTS MOVED TO END OF BODY FOR RELIABLE LOADING -->
+    <script src="game-data.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            
-            // --- GAME STATE ---
-            let gameTurn = 0;
-            let timePassing = false;
-            let currentDate = new Date('2025-04-01T03:00:00');
-            let previousScreenId = null;
-            let currentThreadId = null;
-            let anomalyActive = false;
-            
-            // --- GAME DATA ---
-            const characters = {
-                'Verity': { name: 'Verity', avatar: 'https://placehold.co/80x80/7e22ce/ffffff?text=V', title: 'New Member', bio: 'dedicated to uncovering the truth - one conspiracy at a time!' },
-                'Admin': { name: 'Admin', avatar: 'https://placehold.co/80x80/1d4ed8/ffffff?text=A', title: 'Administrator', bio: 'The enigmatic administrator of the forum. Rarely posts, but always seems to be watching.' },
-                'XeroCool': { name: 'XeroCool', avatar: 'https://placehold.co/80x80/16a34a/ffffff?text=X', title: 'Veteran Member', bio: 'A veteran of the old internet. Believes code has a soul and that old machines never truly die. A bit paranoid, but maybe for good reason.' },
-                'Glitch': { name: 'Glitch', avatar: 'https://placehold.co/80x80/dc2626/ffffff?text=G', title: 'Member', bio: 'A chaotic personality who seems to enjoy breaking things, both software and conversations. They sometimes post and then quickly delete cryptic technical details.' },
-                'DietDave': { name: 'DietDave', avatar: 'https://placehold.co/80x80/f97316/ffffff?text=D', title: 'Member', bio: 'A health and fitness enthusiast whose relentless positivity can be a bit unsettling. Seems almost too happy, all the time.' },
-                'QuantumLeaper': { name: 'QuantumLeaper', avatar: 'https://placehold.co/80x80/64748b/ffffff?text=Q', title: 'Member', bio: 'Loves science fiction and fringe science. Their posts are full of speculation about alternate realities, time travel, and the nature of consciousness.' },
-            };
-            
-            let threads = [
-                { id: 1, title: 'Is retro-computing making a comeback?', author: 'XeroCool', timestamp: new Date('2025-04-01T01:15:00') },
-                { id: 2, title: 'What Sci-Fi movie blew your mind recently?', author: 'QuantumLeaper', timestamp: new Date('2025-04-01T00:30:00')},
-            ];
+        // --- GAME STATE ---
+        let gameTurn = 0;
+        let timePassing = false;
+        let currentDate = new Date('2025-04-01T03:00:00');
+        let previousScreenId = null;
+        let currentThreadId = null;
+        let anomalyActive = false;
+        let activeThreads = [];
+        let activePosts = {};
+        let activeMessages = [];
+        let executedTriggers = {};
 
-            let posts = {
-                1: [
-                    { author: 'XeroCool', content: "I've been messing around with some old PDP-11 hardware. There's a certain... purity to it.", timestamp: new Date('2025-04-01T01:15:00') },
-                    { author: 'QuantumLeaper', content: "I get that. It's like driving a manual car. More control, more connection to the machine.", timestamp: new Date('2025-04-01T01:45:00') },
-                ],
-                2: [
-                    { author: 'QuantumLeaper', content: "Just watched 'Event Horizon' again. The idea of a ship's gravity drive accessing a dimension of pure chaos is terrifyingly brilliant.", timestamp: new Date('2025-04-01T00:30:00') }
-                ],
-            };
-            
-            let messages = [];
+        // --- UI ELEMENT REFERENCES ---
+        const ui = {
+            app: document.getElementById('app'),
+            timePassOverlay: document.getElementById('time-pass-overlay'),
+            windowViewContainer: document.getElementById('window-view-container'),
+            digitalClockContainer: document.getElementById('digital-clock-container'),
+            sidebarContainer: document.getElementById('sidebar-container'),
+            screens: {
+                forum: document.getElementById('screen-forum'),
+                messages: document.getElementById('screen-messages'),
+                notes: document.getElementById('screen-notes'),
+                profile: document.getElementById('screen-profile'),
+            },
+            navButtons: {
+                forum: document.getElementById('nav-forum'),
+                messages: document.getElementById('nav-messages'),
+                notes: document.getElementById('nav-notes-icon'),
+                time: document.getElementById('time-pass-btn'),
+            },
+            messageCountBadge: document.getElementById('message-count-badge'),
+            threadList: document.getElementById('thread-list'),
+            threadDetail: document.getElementById('thread-detail'),
+            forumListCard: document.getElementById('forum-list-card'),
+            postContainer: document.getElementById('post-container'),
+            threadTitle: document.getElementById('thread-title'),
+            backToForumBtn: document.getElementById('back-to-forum'),
+            profileContent: document.getElementById('profile-content'),
+            replyTextarea: document.getElementById('reply-textarea'),
+            postReplyBtn: document.getElementById('post-reply-btn'),
+            messageListContainer: document.getElementById('message-list-container'),
+            messageReplyContainer: document.getElementById('message-reply-container'),
+        };
 
-            const scheduledEvents = [
-                 { turn: 1, type: 'newMessage', data: { from: 'XeroCool', to: 'Verity', subject: 'Welcome to the forum', content: 'Hey, noticed you were new. Just wanted to say welcome. This place has... history. Keep your eyes open.', unread: true } },
-                 { turn: 2, type: 'newPost', data: { threadId: 1, author: 'Admin', content: 'TEST POST: Please ignore.' } }
-            ];
+        // --- FORMATTING HELPERS ---
+        const formatTimestamp = (postDate, baseDate) => { const diffSeconds = Math.round((baseDate - postDate) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (diffSeconds < 60) return "Just now"; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return `${diffHours} hours ago`; if (diffDays === 1) return `Yesterday`; return `${diffDays} days ago`; }
 
-            const windowImages = {
-                normal: {
-                    0: 'https://placehold.co/200x150/000033/FFFFFF?text=12AM+Normal', 1: 'https://placehold.co/200x150/000033/FFFFFF?text=1AM+Normal', 2: 'https://placehold.co/200x150/000033/FFFFFF?text=2AM+Normal',
-                    3: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/3am.png?raw=true',
-                    4: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/4am.png?raw=true',
-                    5: 'https://placehold.co/200x150/ff9966/FFFFFF?text=5AM+Normal',
-                    6: 'https://placehold.co/200x150/87CEEB/000000?text=6AM+Normal', 7: 'https://placehold.co/200x150/87CEFA/000000?text=7AM+Normal', 8: 'https://placehold.co/200x150/87CEFA/000000?text=8AM+Normal',
-                    9: 'https://placehold.co/200x150/87CEFA/000000?text=9AM+Normal', 10: 'https://placehold.co/200x150/87CEFA/000000?text=10AM+Normal', 11: 'https://placehold.co/200x150/87CEFA/000000?text=11AM+Normal',
-                    12: 'https://placehold.co/200x150/87CEFA/000000?text=12PM+Normal', 13: 'https://placehold.co/200x150/87CEFA/000000?text=1PM+Normal', 14: 'https://placehold.co/200x150/87CEFA/000000?text=2PM+Normal',
-                    15: 'https://placehold.co/200x150/87CEFA/000000?text=3PM+Normal', 16: 'https://placehold.co/200x150/87CEFA/000000?text=4PM+Normal', 17: 'https://placehold.co/200x150/b1daef/000000?text=5PM+Normal',
-                    18: 'https://placehold.co/200x150/FF7F50/FFFFFF?text=6PM+Normal', 19: 'https://placehold.co/200x150/4682B4/FFFFFF?text=7PM+Normal', 20: 'https://placehold.co/200x150/00008B/FFFFFF?text=8PM+Normal',
-                    21: 'https://placehold.co/200x150/000033/FFFFFF?text=9PM+Normal', 22: 'https://placehold.co/200x150/000033/FFFFFF?text=10PM+Normal', 23: 'https://placehold.co/200x150/000033/FFFFFF?text=11PM+Normal'
-                },
-                anomaly: {
-                    0: 'https://placehold.co/200x150/000033/FF0000?text=12AM+Anomaly', 1: 'https://placehold.co/200x150/000033/FF0000?text=1AM+Anomaly', 2: 'https://placehold.co/200x150/000033/FF0000?text=2AM+Anomaly',
-                    3: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/3amanom.png?raw=true',
-                    4: 'https://github.com/Dolligan/ForumHorror/blob/main/Images/4amanom.png?raw=true',
-                    5: 'https://placehold.co/200x150/ff9966/FF0000?text=5AM+Anomaly',
-                    6: 'https://placehold.co/200x150/87CEEB/FF0000?text=6AM+Anomaly', 7: 'https://placehold.co/200x150/87CEFA/FF0000?text=7AM+Anomaly', 8: 'https://placehold.co/200x150/87CEFA/FF0000?text=8AM+Anomaly',
-                    9: 'https://placehold.co/200x150/87CEFA/FF0000?text=9AM+Anomaly', 10: 'https://placehold.co/200x150/87CEFA/FF0000?text=10AM+Anomaly', 11: 'https://placehold.co/200x150/87CEFA/FF0000?text=11AM+Anomaly',
-                    12: 'https://placehold.co/200x150/87CEFA/FF0000?text=12PM+Anomaly', 13: 'https://placehold.co/200x150/87CEFA/FF0000?text=1PM+Anomaly', 14: 'https://placehold.co/200x150/87CEFA/FF0000?text=2PM+Anomaly',
-                    15: 'https://placehold.co/200x150/87CEFA/FF0000?text=3PM+Anomaly', 16: 'https://placehold.co/200x150/87CEFA/FF0000?text=4PM+Anomaly', 17: 'https://placehold.co/200x150/b1daef/FF0000?text=5PM+Anomaly',
-                    18: 'https://placehold.co/200x150/FF7F50/000000?text=6PM+Anomaly', 19: 'https://placehold.co/200x150/4682B4/FF0000?text=7PM+Anomaly', 20: 'https://placehold.co/200x150/00008B/FF0000?text=8PM+Anomaly',
-                    21: 'https://placehold.co/200x150/000033/FF0000?text=9PM+Anomaly', 22: 'https://placehold.co/200x150/000033/FF0000?text=10PM+Anomaly', 23: 'https://placehold.co/200x150/000033/FF0000?text=11PM+Anomaly'
-                }
-            };
-            
-            // --- UI ELEMENT REFERENCES ---
-            const ui = {
-                app: document.getElementById('app'),
-                timePassOverlay: document.getElementById('time-pass-overlay'),
-                windowViewContainer: document.getElementById('window-view-container'),
-                digitalClockContainer: document.getElementById('digital-clock-container'),
-                sidebarContainer: document.getElementById('sidebar-container'),
-                screens: {
-                    forum: document.getElementById('screen-forum'),
-                    messages: document.getElementById('screen-messages'),
-                    notes: document.getElementById('screen-notes'),
-                    profile: document.getElementById('screen-profile'),
-                },
-                navButtons: {
-                    forum: document.getElementById('nav-forum'),
-                    messages: document.getElementById('nav-messages'),
-                    notes: document.getElementById('nav-notes-icon'),
-                    time: document.getElementById('time-pass-btn'),
-                },
-                messageCountBadge: document.getElementById('message-count-badge'),
-                threadList: document.getElementById('thread-list'),
-                threadDetail: document.getElementById('thread-detail'),
-                forumListCard: document.getElementById('forum-list-card'),
-                postContainer: document.getElementById('post-container'),
-                threadTitle: document.getElementById('thread-title'),
-                backToForumBtn: document.getElementById('back-to-forum'),
-                profileContent: document.getElementById('profile-content'),
-                replyTextarea: document.getElementById('reply-textarea'),
-                postReplyBtn: document.getElementById('post-reply-btn'),
-                messageListContainer: document.getElementById('message-list-container'),
-                messageReplyContainer: document.getElementById('message-reply-container'),
-            };
-
-            // --- FORMATTING HELPERS ---
-            const formatTimestamp = (postDate, baseDate) => { const diffSeconds = Math.round((baseDate - postDate) / 1000); const diffMinutes = Math.round(diffSeconds / 60); const diffHours = Math.round(diffMinutes / 60); const diffDays = Math.round(diffHours / 24); if (diffSeconds < 60) return "Just now"; if (diffMinutes < 60) return `${diffMinutes} minutes ago`; if (diffHours < 24) return `${diffHours} hours ago`; if (diffDays === 1) return `Yesterday`; return `${diffDays} days ago`; }
-
-            // --- RENDER FUNCTIONS ---
-            const render = {
-                windowView: () => {
-                    const hour = currentDate.getHours();
-                    const state = anomalyActive ? 'anomaly' : 'normal';
-                    const imageUrl = windowImages[state][hour];
-                    ui.windowViewContainer.innerHTML = `<img src="${imageUrl}" alt="View from the window" class="w-full h-auto rounded-md shadow-lg" onerror="this.onerror=null;this.src='https://placehold.co/200x150/ccc/FFFFFF?text=Error';">`;
-                },
-                clock: () => {
-                    const time = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit', hour12: true });
-                    const date = currentDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
-                    ui.digitalClockContainer.innerHTML = `<div class="digital-clock"><div class="time">${time}</div><div class="date">${date}</div></div>`;
-                },
-                threadList: () => {
-                    ui.threadList.innerHTML = '';
-                    const sortedThreads = [...threads].sort((a,b) => {
-                        const lastPostA = (posts[a.id] && posts[a.id].length > 0) ? posts[a.id].slice(-1)[0].timestamp : a.timestamp;
-                        const lastPostB = (posts[b.id] && posts[b.id].length > 0) ? posts[b.id].slice(-1)[0].timestamp : b.timestamp;
-                        return lastPostB - lastPostA;
-                    });
-                    sortedThreads.forEach(thread => {
-                        const threadPosts = posts[thread.id] || [];
-                        const postCount = Math.max(0, threadPosts.length - 1);
-                        const lastPostTimestamp = threadPosts.length > 0 ? threadPosts[threadPosts.length - 1].timestamp : thread.timestamp;
-                        ui.threadList.insertAdjacentHTML('beforeend', `<div class="flex items-center p-4 border-t border-gray-200 hover:bg-gray-50 cursor-pointer" data-thread-id="${thread.id}"><div class="w-12 text-center mr-4"><div class="text-2xl font-bold">${postCount}</div><div class="text-xs text-gray-500">Replies</div></div><div class="flex-grow"><p class="font-semibold text-blue-600 text-lg">${thread.title}</p><p class="text-sm text-gray-600">Started by <span class="username-link" data-char-name="${thread.author}">${thread.author}</span></p></div><div class="w-40 text-sm text-right text-gray-500"><p>${formatTimestamp(lastPostTimestamp, currentDate)}</p></div></div>`);
-                    });
-                },
-                threadDetail: (threadId) => {
-                    const threadPosts = posts[threadId] || [];
-                    const threadData = threads.find(t => t.id == threadId);
-                    ui.threadTitle.textContent = threadData.title;
-                    ui.postContainer.innerHTML = '';
-                    threadPosts.forEach(post => {
-                        const char = characters[post.author];
-                        ui.postContainer.insertAdjacentHTML('beforeend', `<div class="ips-card"><div class="ips-post"><div class="ips-post-author text-center"><img src="${char.avatar}" alt="${char.name}" class="w-20 h-20 rounded-full mx-auto mb-2 border-2 border-gray-300"><p class="font-bold text-lg"><span class="username-link" data-char-name="${post.author}">${char.name}</span></p><p class="text-sm text-gray-500">${char.title}</p></div><div class="ips-post-content"><p class="text-xs text-gray-500 mb-4">Posted ${formatTimestamp(post.timestamp, currentDate)}</p><div class="prose max-w-none">${post.content.replace(/\n/g, '<br>')}</div></div></div></div>`);
-                    });
-                },
-                userProfile: (charName) => { const char = characters[charName]; if (!char) return; ui.profileContent.innerHTML = `<div class="ips-header flex justify-between items-center"><h2 class="font-bold text-lg">${char.name}'s Profile</h2><button id="profile-back-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back</button></div><div class="flex flex-col md:flex-row p-6 gap-6"><div class="text-center w-full md:w-1/4"><img src="${char.avatar}" alt="${char.name}" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-300"><h3 class="text-2xl font-bold text-blue-700">${char.name}</h3><p class="text-gray-500">${char.title}</p></div><div class="w-full md:w-3/4"><h4 class="font-bold text-lg border-b border-gray-200 pb-2 mb-2">Biography</h4><p class="text-gray-700 leading-relaxed">${char.bio}</p></div></div>`; },
-                messages: () => { let html = `<div class="ips-card"><h2 class="ips-header font-bold text-lg">Private Messages</h2><div class="p-4 space-y-4">`; const partners = [...new Set(messages.map(m => m.from === 'Verity' ? m.to : m.from))]; if (partners.length === 0) { html += `<p class="text-gray-500 text-center p-4">You have no messages.</p>`; } else { partners.forEach(p => { const last = messages.filter(m => m.from === p || m.to === p).sort((a,b) => b.timestamp - a.timestamp)[0]; const char = characters[p]; const unread = messages.some(m => m.from === p && m.unread); html += `<div class="message-thread-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer ${unread ? 'font-bold bg-blue-50' : ''}" data-partner="${p}"><div class="flex items-center space-x-3 mb-2"><img src="${char.avatar}" alt="${char.name} Avatar" class="rounded-full w-10 h-10"><div><p class="username-link text-base" data-char-name="${p}">${p}</p><p class="text-sm text-gray-500 font-normal">${formatTimestamp(last.timestamp, currentDate)}</p></div></div><p class="text-gray-800">${last.subject}</p><p class="text-gray-600 mt-1 font-normal truncate">${last.from === 'Verity' ? 'You: ' : ''}${last.content}</p></div>`; }); } html += `</div></div>`; ui.messageListContainer.innerHTML = html; },
-                messageReply: (partnerName) => { ui.messageListContainer.classList.add('hidden'); const convo = messages.filter(m => m.from === partnerName || m.to === partnerName).sort((a, b) => a.timestamp - b.timestamp); let html = `<div class="ips-card"><div class="ips-header flex justify-between items-center"><h2 class="font-bold text-lg">Conversation with ${partnerName}</h2><button id="back-to-messages-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back to Inbox</button></div><div class="p-4 space-y-4 max-h-96 overflow-y-auto">`; convo.forEach(msg => { const sender = characters[msg.from]; const isPlayer = msg.from === 'Verity'; html += `<div class="flex ${isPlayer ? 'justify-end' : 'justify-start'}"><div class="max-w-xl"><div class="flex items-center gap-2 ${isPlayer ? 'flex-row-reverse' : ''}"><img src="${sender.avatar}" alt="${sender.name}" class="w-8 h-8 rounded-full"><span class="font-semibold">${sender.name}</span><span class="text-xs text-gray-500">${formatTimestamp(msg.timestamp, currentDate)}</span></div><div class="mt-1 ${isPlayer ? 'bg-blue-100' : 'bg-gray-100'} p-3 rounded-lg"><p>${msg.content}</p></div></div></div>`; }); html += `</div><div class="p-4 border-t border-gray-200"><textarea id="message-reply-textarea" class="w-full h-24 p-2 border border-gray-300 rounded-md" placeholder="Write your reply..."></textarea><div class="text-right mt-2"><button id="send-reply-btn" data-reply-to="${partnerName}" class="px-6 py-2 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm">Send Reply</button></div></div></div>`; ui.messageReplyContainer.innerHTML = html; ui.messageReplyContainer.classList.remove('hidden'); },
-                notes: () => { ui.screens.notes.innerHTML = `<div class="ips-card"><h2 class="ips-header font-bold text-lg">Your Notes</h2><div class="p-6"><p class="text-gray-500 italic mb-6">This page automatically updates with important clues and information you discover.</p><ul id="notes-list" class="list-disc list-inside space-y-3"></ul></div></div>`; },
-                messageCount: () => { const count = messages.filter(m => m.to === 'Verity' && m.unread).length; ui.messageCountBadge.textContent = count; ui.messageCountBadge.classList.toggle('hidden', count === 0); },
-                all: () => { render.clock(); render.threadList(); render.messages(); render.notes(); render.messageCount(); render.windowView(); if (currentThreadId) { render.threadDetail(currentThreadId); } }
-            };
-            
-            // --- GAME LOGIC ---
-            const actions = {
-                passTime: () => {
-                    if (timePassing) return; 
-                    timePassing = true;
+        // --- RENDER FUNCTIONS ---
+        const render = {
+            windowView: () => {
+                const hour = currentDate.getHours();
+                const state = anomalyActive ? 'anomaly' : 'normal';
+                const imageUrl = windowImages[state][hour];
+                ui.windowViewContainer.innerHTML = `<img src="${imageUrl}" alt="View from the window" class="w-full h-auto rounded-md shadow-lg" onerror="this.onerror=null;this.src='https://placehold.co/200x150/ccc/FFFFFF?text=Error';">`;
+            },
+            clock: () => {
+                const time = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit', hour12: true });
+                const date = currentDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+                ui.digitalClockContainer.innerHTML = `<div class="digital-clock"><div class="time">${time}</div><div class="date">${date}</div></div>`;
+            },
+            threadList: () => {
+                ui.threadList.innerHTML = '';
+                const sortedThreads = [...activeThreads].sort((a,b) => {
+                    const lastPostA = (activePosts[a.id] && activePosts[a.id].length > 0) ? activePosts[a.id].slice(-1)[0].timestamp : a.timestamp;
+                    const lastPostB = (activePosts[b.id] && activePosts[b.id].length > 0) ? activePosts[b.id].slice(-1)[0].timestamp : b.timestamp;
+                    return lastPostB - lastPostA;
+                });
+                sortedThreads.forEach(thread => {
+                    const threadPosts = activePosts[thread.id] || [];
+                    const postCount = Math.max(0, threadPosts.length - 1);
+                    const lastPostTimestamp = threadPosts.length > 0 ? threadPosts[threadPosts.length - 1].timestamp : thread.timestamp;
+                    ui.threadList.insertAdjacentHTML('beforeend', `<div class="flex items-center p-4 border-t border-gray-200 hover:bg-gray-50 cursor-pointer" data-thread-id="${thread.id}"><div class="w-12 text-center mr-4"><div class="text-2xl font-bold">${postCount}</div><div class="text-xs text-gray-500">Replies</div></div><div class="flex-grow"><p class="font-semibold text-blue-600 text-lg">${thread.title}</p><p class="text-sm text-gray-600">Started by <span class="username-link" data-char-name="${thread.author}">${thread.author}</span></p></div><div class="w-40 text-sm text-right text-gray-500"><p>${formatTimestamp(lastPostTimestamp, currentDate)}</p></div></div>`);
+                });
+            },
+            threadDetail: (threadId) => {
+                const threadPosts = activePosts[threadId] || [];
+                const threadData = activeThreads.find(t => t.id == threadId);
+                ui.threadTitle.textContent = threadData.title;
+                ui.postContainer.innerHTML = '';
+                threadPosts.forEach(post => {
+                    const char = characters[post.author];
+                    ui.postContainer.insertAdjacentHTML('beforeend', `<div class="ips-card"><div class="ips-post"><div class="ips-post-author text-center"><img src="${char.avatar}" alt="${char.name}" class="w-20 h-20 rounded-full mx-auto mb-2 border-2 border-gray-300"><p class="font-bold text-lg"><span class="username-link" data-char-name="${post.author}">${char.name}</span></p><p class="text-sm text-gray-500">${char.title}</p></div><div class="ips-post-content"><p class="text-xs text-gray-500 mb-4">Posted ${formatTimestamp(post.timestamp, currentDate)}</p><div class="prose max-w-none">${post.content.replace(/\n/g, '<br>')}</div></div></div></div>`);
+                });
+            },
+            userProfile: (charName) => { const char = characters[charName]; if (!char) return; ui.profileContent.innerHTML = `<div class="ips-header flex justify-between items-center"><h2 class="font-bold text-lg">${char.name}'s Profile</h2><button id="profile-back-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back</button></div><div class="flex flex-col md:flex-row p-6 gap-6"><div class="text-center w-full md:w-1/4"><img src="${char.avatar}" alt="${char.name}" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-300"><h3 class="text-2xl font-bold text-blue-700">${char.name}</h3><p class="text-gray-500">${char.title}</p></div><div class="w-full md:w-3/4"><h4 class="font-bold text-lg border-b border-gray-200 pb-2 mb-2">Biography</h4><p class="text-gray-700 leading-relaxed">${char.bio}</p></div></div>`; },
+            messages: () => { let html = `<div class="ips-card"><h2 class="ips-header font-bold text-lg">Private Messages</h2><div class="p-4 space-y-4">`; const partners = [...new Set(activeMessages.map(m => m.from === 'Verity' ? m.to : m.from))]; if (partners.length === 0) { html += `<p class="text-gray-500 text-center p-4">You have no messages.</p>`; } else { partners.forEach(p => { const last = activeMessages.filter(m => m.from === p || m.to === p).sort((a,b) => b.timestamp - a.timestamp)[0]; const char = characters[p]; const unread = activeMessages.some(m => m.from === p && m.unread); html += `<div class="message-thread-item border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer ${unread ? 'font-bold bg-blue-50' : ''}" data-partner="${p}"><div class="flex items-center space-x-3 mb-2"><img src="${char.avatar}" alt="${char.name} Avatar" class="rounded-full w-10 h-10"><div><p class="username-link text-base" data-char-name="${p}">${p}</p><p class="text-sm text-gray-500 font-normal">${formatTimestamp(last.timestamp, currentDate)}</p></div></div><p class="text-gray-800">${last.subject}</p><p class="text-gray-600 mt-1 font-normal truncate">${last.from === 'Verity' ? 'You: ' : ''}${last.content}</p></div>`; }); } html += `</div></div>`; ui.messageListContainer.innerHTML = html; },
+            messageReply: (partnerName) => { ui.messageListContainer.classList.add('hidden'); const convo = activeMessages.filter(m => m.from === partnerName || m.to === partnerName).sort((a, b) => a.timestamp - b.timestamp); let html = `<div class="ips-card"><div class="ips-header flex justify-between items-center"><h2 class="font-bold text-lg">Conversation with ${partnerName}</h2><button id="back-to-messages-btn" class="px-4 py-2 rounded-md font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm">← Back to Inbox</button></div><div class="p-4 space-y-4 max-h-96 overflow-y-auto">`; convo.forEach(msg => { const sender = characters[msg.from]; const isPlayer = msg.from === 'Verity'; html += `<div class="flex ${isPlayer ? 'justify-end' : 'justify-start'}"><div class="max-w-xl"><div class="flex items-center gap-2 ${isPlayer ? 'flex-row-reverse' : ''}"><img src="${sender.avatar}" alt="${sender.name}" class="w-8 h-8 rounded-full"><span class="font-semibold">${sender.name}</span><span class="text-xs text-gray-500">${formatTimestamp(msg.timestamp, currentDate)}</span></div><div class="mt-1 ${isPlayer ? 'bg-blue-100' : 'bg-gray-100'} p-3 rounded-lg"><p>${msg.content}</p></div></div></div>`; }); html += `</div><div class="p-4 border-t border-gray-200"><textarea id="message-reply-textarea" class="w-full h-24 p-2 border border-gray-300 rounded-md" placeholder="Write your reply..."></textarea><div class="text-right mt-2"><button id="send-reply-btn" data-reply-to="${partnerName}" class="px-6 py-2 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm">Send Reply</button></div></div></div>`; ui.messageReplyContainer.innerHTML = html; ui.messageReplyContainer.classList.remove('hidden'); },
+            notes: () => { ui.screens.notes.innerHTML = `<div class="ips-card"><h2 class="ips-header font-bold text-lg">Your Notes</h2><div class="p-6"><p class="text-gray-500 italic mb-6">This page automatically updates with important clues and information you discover.</p><ul id="notes-list" class="list-disc list-inside space-y-3"></ul></div></div>`; },
+            messageCount: () => { const count = activeMessages.filter(m => m.to === 'Verity' && m.unread).length; ui.messageCountBadge.textContent = count; ui.messageCountBadge.classList.toggle('hidden', count === 0); },
+            all: () => { render.clock(); render.threadList(); render.messages(); render.messageCount(); render.windowView(); if (currentThreadId) { render.threadDetail(currentThreadId); } else { render.notes(); } }
+        };
+        
+        // --- GAME LOGIC ---
+        const actions = {
+            passTime: () => {
+                if (timePassing) return; 
+                timePassing = true;
+                ui.timePassOverlay.classList.remove('hidden');
+                ui.timePassOverlay.classList.remove('opacity-0');
+                ui.app.classList.add('screen-fuzzy');
+                
+                const processTurn = () => {
                     currentDate.setHours(currentDate.getHours() + 1); 
                     gameTurn++;
-                    ui.timePassOverlay.classList.remove('hidden');
-                    ui.timePassOverlay.classList.remove('opacity-0');
-                    ui.app.classList.add('screen-fuzzy');
-                    setTimeout(() => {
-                        actions.triggerEvents(gameTurn);
-                        ui.timePassOverlay.classList.add('opacity-0'); 
-                        ui.app.classList.remove('screen-fuzzy');
-                        render.all();
-                        setTimeout(() => { ui.timePassOverlay.classList.add('hidden'); timePassing = false; }, 300);
-                    }, 1500);
-                },
-                triggerEvents: (turn) => {
-                    scheduledEvents.filter(e => e.turn === turn).forEach(event => {
-                        const eventData = { ...event.data, id: Date.now(), timestamp: new Date(currentDate) };
-                        if (event.type === 'newMessage') { messages.push(eventData); }
-                        if (event.type === 'newPost') {
-                            if (!posts[eventData.threadId]) { posts[eventData.threadId] = []; }
-                            posts[eventData.threadId].push(eventData);
-                            const thread = threads.find(t => t.id === eventData.threadId);
-                            if (thread) thread.timestamp = eventData.timestamp;
-                        }
-                    });
-                }
-            };
-            
-            // --- UI LOGIC & NAVIGATION ---
-            const view = {
-                showScreen: (screenId) => {
-                    if (screenId === 'messages') {
-                        messages.forEach(m => { if(m.to === 'Verity') m.unread = false; });
-                        view.showMessagesList();
-                        render.messageCount();
-                    }
-                    Object.values(ui.screens).forEach(s => s.classList.add('hidden'));
-                    ui.screens[screenId].classList.remove('hidden');
-                    ui.sidebarContainer.classList.toggle('hidden', screenId !== 'forum');
-                    Object.values(ui.navButtons).forEach(b => {b.classList.remove('bg-blue-600', 'text-white', 'bg-gray-200'); if(b.id !== 'nav-forum' && b.id !=='nav-messages') b.classList.add('hover:bg-gray-100'); });
-                    if (ui.navButtons[screenId] && ui.navButtons[screenId].id.startsWith('nav-')) {
-                        ui.navButtons[screenId].classList.add('bg-blue-600', 'text-white');
-                    }
-                },
-                showMessagesList: () => { ui.messageReplyContainer.classList.add('hidden'); ui.messageReplyContainer.innerHTML = ''; render.messages(); ui.messageListContainer.classList.remove('hidden'); },
-                showThreadDetail: (threadId) => { currentThreadId = threadId; ui.forumListCard.classList.add('hidden'); render.threadDetail(threadId); ui.threadDetail.classList.remove('hidden'); },
-                showForumList: () => { currentThreadId = null; ui.threadDetail.classList.add('hidden'); ui.forumListCard.classList.remove('hidden'); },
-                showProfile: (charName) => { previousScreenId = Object.keys(ui.screens).find(key => !ui.screens[key].classList.contains('hidden')) || 'forum'; view.showScreen('profile'); render.userProfile(charName); },
-                hideProfile: () => { view.showScreen(previousScreenId); previousScreenId = null; }
-            };
+                    actions.triggerEvents(gameTurn);
+                    render.all();
 
-            // --- EVENT LISTENERS ---
-            ui.navButtons.forum.addEventListener('click', () => { view.showScreen('forum'); view.showForumList(); });
-            ui.navButtons.messages.addEventListener('click', () => view.showScreen('messages'));
-            ui.navButtons.notes.addEventListener('click', () => view.showScreen('notes'));
-            ui.navButtons.time.addEventListener('click', actions.passTime);
-            ui.backToForumBtn.addEventListener('click', view.showForumList);
-            ui.postReplyBtn.addEventListener('click', () => { const content = ui.replyTextarea.value.trim(); if (content && currentThreadId) { const post = { author: 'Verity', content, timestamp: new Date(currentDate) }; posts[currentThreadId].push(post); threads.find(t => t.id == currentThreadId).timestamp = new Date(currentDate); ui.replyTextarea.value = ''; render.threadDetail(currentThreadId); render.threadList(); } });
-            
-            ui.app.addEventListener('click', (e) => { 
-                const threadTarget = e.target.closest('[data-thread-id]');
-                if (threadTarget) { view.showThreadDetail(threadTarget.dataset.threadId); return; }
-                const profileTarget = e.target.closest('.username-link');
-                if (profileTarget) { e.preventDefault(); view.showProfile(profileTarget.dataset.charName); return; }
-                const messageThreadTarget = e.target.closest('.message-thread-item');
-                if (messageThreadTarget) { render.messageReply(messageThreadTarget.dataset.partner); return; }
-                const backToMessagesBtn = e.target.closest('#back-to-messages-btn');
-                if (backToMessagesBtn) { view.showMessagesList(); return; }
-                const profileBackBtn = e.target.closest('#profile-back-btn');
-                if (profileBackBtn) { view.hideProfile(); return; }
-                const sendReplyBtn = e.target.closest('#send-reply-btn');
-                if (sendReplyBtn) {
-                    const recipient = sendReplyBtn.dataset.replyTo;
-                    const textarea = document.getElementById('message-reply-textarea');
-                    const content = textarea.value.trim();
-                    if (content && recipient) {
-                        const subject = messages.filter(m => m.from === recipient || m.to === recipient).sort((a,b) => b.timestamp - a.timestamp)[0].subject;
-                        messages.push({ id: Date.now(), from: 'Verity', to: recipient, subject: `RE: ${subject}`, content, timestamp: new Date(currentDate), unread: false });
-                        textarea.value = '';
-                        render.messageReply(recipient);
+                    ui.timePassOverlay.classList.add('opacity-0'); 
+                    ui.app.classList.remove('screen-fuzzy');
+                    setTimeout(() => { ui.timePassOverlay.classList.add('hidden'); timePassing = false; }, 300);
+                };
+
+                setTimeout(processTurn, 1500);
+            },
+            processEvent: (event) => {
+                const data = { ...event.data, id: event.data.id || Date.now(), timestamp: new Date(currentDate) };
+                if (event.type === 'newMessage') { 
+                    activeMessages.push(data);
+                    actions.checkTriggers('receive', data);
+                }
+                if (event.type === 'newPost') {
+                    if (!activePosts[data.threadId]) activePosts[data.threadId] = [];
+                    activePosts[data.threadId].push(data);
+                }
+                if (event.type === 'newThread') {
+                    const threadData = allThreads[data.threadId];
+                    if (threadData && !activeThreads.some(t => t.id === data.threadId)) {
+                        activeThreads.push({ ...threadData, timestamp: new Date(currentDate) });
+                        activePosts[data.threadId] = [...allPosts[data.threadId]];
                     }
                 }
-            });
-            
-            // --- INITIALIZATION ---
-            render.all();
-            view.showScreen('forum');
+                 if (event.type === 'disappearThread') {
+                    activeThreads = activeThreads.filter(t => t.id !== data.threadId);
+                 }
+            },
+            triggerEvents: (turn) => {
+                scheduledEvents.filter(e => e.turn === turn).forEach(actions.processEvent);
+            },
+            checkTriggers: (action, data) => {
+                for (const key in triggeredEvents) {
+                    const event = triggeredEvents[key];
+                    if (event.once && executedTriggers[key]) continue;
+
+                    const parts = key.split('_');
+                    const type = parts[0];
+                    const target = parts[1];
+                    const condition = parts[2];
+                    const value = parseInt(parts[3], 10);
+                    
+                    let triggered = false;
+                    if (action === 'reply' && type === 'reply' && data.threadId === target && condition === 'before' && gameTurn < value) {
+                        triggered = true;
+                    }
+                    if (action === 'pm' && type === 'pm' && data.to === target && condition === 'before' && gameTurn < value) {
+                        triggered = true;
+                    }
+                    if (action === 'receive' && type === 'receive' && data.id === target) {
+                       triggered = true;
+                    }
+
+                    if (triggered) {
+                        if (event.delay > 0) {
+                            scheduledEvents.push({ turn: gameTurn + event.delay, ...event });
+                        } else {
+                            actions.processEvent(event);
+                        }
+                        if (event.once) executedTriggers[key] = true;
+                    }
+                }
+            }
+        };
+        
+        // --- UI LOGIC & NAVIGATION ---
+        const view = {
+            showScreen: (screenId) => {
+                if (screenId === 'messages') {
+                    activeMessages.forEach(m => { if(m.to === 'Verity') m.unread = false; });
+                    view.showMessagesList();
+                    render.messageCount();
+                }
+                Object.values(ui.screens).forEach(s => s.classList.add('hidden'));
+                ui.screens[screenId].classList.remove('hidden');
+                ui.sidebarContainer.classList.toggle('hidden', screenId !== 'forum');
+                Object.values(ui.navButtons).forEach(b => {b.classList.remove('bg-blue-600', 'text-white', 'bg-gray-200'); if(b.id !== 'nav-forum' && b.id !=='nav-messages') b.classList.add('hover:bg-gray-100'); });
+                if (ui.navButtons[screenId] && ui.navButtons[screenId].id.startsWith('nav-')) {
+                    ui.navButtons[screenId].classList.add('bg-blue-600', 'text-white');
+                }
+            },
+            showMessagesList: () => { ui.messageReplyContainer.classList.add('hidden'); ui.messageReplyContainer.innerHTML = ''; render.messages(); ui.messageListContainer.classList.remove('hidden'); },
+            showThreadDetail: (threadId) => { currentThreadId = threadId; ui.forumListCard.classList.add('hidden'); render.threadDetail(threadId); ui.threadDetail.classList.remove('hidden'); },
+            showForumList: () => { currentThreadId = null; ui.threadDetail.classList.add('hidden'); ui.forumListCard.classList.remove('hidden'); },
+            showProfile: (charName) => { previousScreenId = Object.keys(ui.screens).find(key => !ui.screens[key].classList.contains('hidden')) || 'forum'; view.showScreen('profile'); render.userProfile(charName); },
+            hideProfile: () => { view.showScreen(previousScreenId); previousScreenId = null; }
+        };
+
+        // --- EVENT LISTENERS ---
+        ui.navButtons.forum.addEventListener('click', () => { view.showScreen('forum'); view.showForumList(); });
+        ui.navButtons.messages.addEventListener('click', () => view.showScreen('messages'));
+        ui.navButtons.notes.addEventListener('click', () => view.showScreen('notes'));
+        ui.navButtons.time.addEventListener('click', actions.passTime);
+        ui.backToForumBtn.addEventListener('click', view.showForumList);
+        ui.postReplyBtn.addEventListener('click', () => { const content = ui.replyTextarea.value.trim(); if (content && currentThreadId) { const post = { author: 'Verity', content, timestamp: new Date(currentDate) }; activePosts[currentThreadId].push(post); actions.checkTriggers('reply', { threadId: currentThreadId }); ui.replyTextarea.value = ''; render.threadDetail(currentThreadId); render.threadList(); } });
+        
+        ui.app.addEventListener('click', (e) => { 
+            const threadTarget = e.target.closest('[data-thread-id]');
+            if (threadTarget) { view.showThreadDetail(threadTarget.dataset.threadId); return; }
+            const profileTarget = e.target.closest('.username-link');
+            if (profileTarget) { e.preventDefault(); view.showProfile(profileTarget.dataset.charName); return; }
+            const messageThreadTarget = e.target.closest('.message-thread-item');
+            if (messageThreadTarget) { render.messageReply(messageThreadTarget.dataset.partner); return; }
+            const backToMessagesBtn = e.target.closest('#back-to-messages-btn');
+            if (backToMessagesBtn) { view.showMessagesList(); return; }
+            const profileBackBtn = e.target.closest('#profile-back-btn');
+            if (profileBackBtn) { view.hideProfile(); return; }
+            const sendReplyBtn = e.target.closest('#send-reply-btn');
+            if (sendReplyBtn) {
+                const recipient = sendReplyBtn.dataset.replyTo;
+                const textarea = document.getElementById('message-reply-textarea');
+                const content = textarea.value.trim();
+                if (content && recipient) {
+                    const subject = activeMessages.filter(m => m.from === recipient || m.to === recipient).sort((a,b) => b.timestamp - a.timestamp)[0].subject;
+                    const message = { id: Date.now(), from: 'Verity', to: recipient, subject: `RE: ${subject}`, content, timestamp: new Date(currentDate), unread: false };
+                    activeMessages.push(message);
+                    actions.checkTriggers('pm', { to: recipient });
+                    textarea.value = '';
+                    render.messageReply(recipient);
+                }
+            }
         });
+        
+        // --- INITIALIZATION ---
+        actions.triggerEvents(gameTurn);
+        render.all();
+        view.showScreen('forum');
     </script>
 
 </body>
